@@ -125,5 +125,6 @@ class LogEntryViewSet(NAVDefaultsMixin, viewsets.ReadOnlyModelViewSet):
         MultipleFilter, CustomOrderingFilter, NetboxFilter)
     queryset = LogEntry.objects.all()
     serializer_class = LogEntrySerializer
-    filter_fields = ('subsystem', 'object_pk', 'verb')
+    filterset_fields = ('subsystem', 'object_pk', 'verb')
+    filter_fields = filterset_fields
     search_fields = ('summary', )
