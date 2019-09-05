@@ -23,3 +23,9 @@ on by adding ``workaround = feide-oidc`` in the config.
 Since the password is controlled from a system externally to NAV, the user does
 not have access to change the password from inside NAV. If an account is set to
 invalid in NAV, the user will not be logged in, even if the header is set.
+
+It is possible to protect an entire site from unuathenticated logins, which
+means the user must log in for the first url visited, including the homepage.
+It might therefore prevent the included ``admin``-user from being used unless
+the remote authentication system already has a user ``admin``. The command
+``navuser`` can create a user with admin rights, or add it to an existing user.

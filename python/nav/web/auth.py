@@ -63,6 +63,7 @@ _logger = logging.getLogger(__name__)
 
 ACCOUNT_ID_VAR = 'account_id'
 SUDOER_ID_VAR = 'sudoer'
+REMOTE_LOGIN_VAR = 'foo'
 
 # This may seem like redundant information, but it seems django's reverse
 # will hang under some usages of these middleware classes - so until we figure
@@ -361,6 +362,12 @@ class AuthenticationMiddleware(MiddlewareMixin):
                 sudo_operator = None
                 # Activate anonymous account for AuthorizationMiddleware's sake
                 ensure_account(request)
+        elif getattr(request.session, REMOTE_LOGIN_VAR, False):
+            # REMOTE_USER disappeared, ensure the session is cleaned away
+            logout(request, sudo=bool(sudo_operator))
+            sudo_operator = None
+            # Activate anonymous account for AuthorizationMiddleware's sake
+            ensure_account(request)
 
         if sudo_operator is not None:
             request.account.sudo_operator = sudo_operator
@@ -401,8 +408,8 @@ def login_remote_user(request):
         # Get or create an account from the REMOTE_USER http header
         account = authenticate_remote_user(request)
         if account:
-            request.session[ACCOUNT_ID_VAR] = account.id
-            request.account = account
+            request.session[REMOTE_LOGIN_VAR] = True
+            _set_account(request, account)
             return account
     return None
 
