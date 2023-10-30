@@ -15,7 +15,7 @@ something that isn't Debian-based.
 
 First get the following OS packages::
 
-  apt-get install -y python-pip python-wheel git postgresql apache2 libapache2-mod-wsgi libsnmp30
+  apt-get install -y python-pip python-wheel git postgresql apache2 libapache2-mod-wsgi-py3 libsnmp30
 
 
 2. Get the source
