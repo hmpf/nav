@@ -74,7 +74,7 @@ def authenticate(request):
             return autocreate_remote_user(username)
         # Bail out!
         _logger.info('User creation turned off, did not create "%s"', username)
-        return False
+        return None
 
     # Bail out! Potentially evil user
     if account.locked:

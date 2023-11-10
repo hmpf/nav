@@ -5,6 +5,7 @@ from django.test import RequestFactory
 import pytest
 
 import nav.web.auth.ldap
+from nav.models.profiles import Account
 from nav.web import auth
 from nav.web.auth import remote_user
 from nav.web.auth.utils import ACCOUNT_ID_VAR
@@ -50,7 +51,9 @@ class TestNormalAuthenticate(object):
 
 
 class TestRemoteUserAuthenticate(object):
-    def test_authenticate_remote_user_should_return_account_if_header_set(self):
+    def test_authenticate_remote_user_should_return_account_if_header_set_and_account_exists(
+        self,
+    ):
         r = RequestFactory()
         request = r.get('/')
         request.META['REMOTE_USER'] = 'knight'
@@ -60,6 +63,49 @@ class TestRemoteUserAuthenticate(object):
                 new=MagicMock(return_value=REMOTE_USER_ACCOUNT),
             ):
                 assert remote_user.authenticate(request) == REMOTE_USER_ACCOUNT
+
+    def test_authenticate_remote_user_should_return_account_if_header_set_and_account_exists_regardless_of_autocrate(
+        self,
+    ):
+        r = RequestFactory()
+        request = r.get('/')
+        request.META['REMOTE_USER'] = 'knight'
+        with patch("nav.web.auth.remote_user._config.getboolean", return_value=False):
+            with patch(
+                "nav.web.auth.Account.objects.get",
+                new=MagicMock(return_value=REMOTE_USER_ACCOUNT),
+            ):
+                assert remote_user.authenticate(request) == REMOTE_USER_ACCOUNT
+
+    def test_authenticate_remote_user_should_not_return_account_if_header_set_and_autocreate_off_and_account_missing(
+        self,
+    ):
+        r = RequestFactory()
+        request = r.get('/')
+        request.META['REMOTE_USER'] = 'knight'
+        with patch("nav.web.auth.remote_user._config.getboolean", return_value=False):
+            with patch(
+                "nav.web.auth.Account.objects.get",
+                side_effect=Account.DoesNotExist,
+            ):
+                assert remote_user.authenticate(request) == None
+
+    def test_authenticate_remote_user_should_call_create_account_if_header_set_and_autocreate_on_and_account_missing(
+        self,
+    ):
+        r = RequestFactory()
+        request = r.get('/')
+        request.META['REMOTE_USER'] = 'knight'
+        with patch("nav.web.auth.remote_user._config.getboolean", return_value=True):
+            with patch(
+                "nav.web.auth.Account.objects.get",
+                side_effect=Account.DoesNotExist,
+            ):
+                with patch(
+                    "nav.web.auth.remote_user.autocreate_remote_user",
+                    new=MagicMock(return_value=REMOTE_USER_ACCOUNT),
+                ):
+                    assert remote_user.authenticate(request) == REMOTE_USER_ACCOUNT
 
     def test_authenticate_remote_user_should_return_none_if_header_not_set(self):
         r = RequestFactory()
